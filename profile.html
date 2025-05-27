@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Profile - Smart Shop Manager</title>
+  <link rel="stylesheet" href="css/profile.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <section class="profile-section">
+    <div class="container">
+      <h2>User Profile</h2>
+      <div id="user-info">
+        <p>
+          <strong>Name:</strong>
+          <input type="text" id="nameInput" placeholder="Enter your name" />
+          <button id="updateNameBtn">Update Name</button>
+        </p>
+        <p><strong>Email:</strong> <span id="email">Loading...</span></p>
+        <p><strong>Email Verified:</strong> <span id="verified">Loading...</span></p>
+        <p><strong>User ID:</strong> <span id="uid">Loading...</span></p>
+      </div>
+      <button id="logoutBtn">Logout</button>
+      <div id="message" style="margin-top: 10px; font-weight: bold;"></div>
+    </div>
+
+    <a href="dashboard.html">
+      <div>
+        <button id="back">Back</button>
+      </div>
+    </a>
+  </section>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEZzbOune3lfB2YFkYMSlg2CZJbAlGQdw",
+      authDomain: "smartshopmanager59.firebaseapp.com",
+      projectId: "smartshopmanager59",
+      storageBucket: "smartshopmanager59.appspot.com",
+      messagingSenderId: "697076760349",
+      appId: "1:697076760349:web:484fd62ea3806a3f92ebf4"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Show user info
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        document.getElementById('nameInput').value = user.displayName || '';
+        document.getElementById('email').textContent = user.email;
+        document.getElementById('verified').textContent = user.emailVerified ? 'Yes' : 'No';
+        document.getElementById('uid').textContent = user.uid;
+      } else {
+        window.location.href = 'signin.html'; // redirect if not logged in
+      }
+    });
+
+    // Update display name
+    document.getElementById('updateNameBtn').addEventListener('click', () => {
+      const newName = document.getElementById('nameInput').value.trim();
+      const user = auth.currentUser;
+
+      if (user && newName) {
+        user.updateProfile({
+          displayName: newName
+        }).then(() => {
+          document.getElementById('message').textContent = 'Name updated successfully!';
+          document.getElementById('message').style.color = 'green';
+        }).catch((error) => {
+          document.getElementById('message').textContent = 'Error updating name: ' + error.message;
+          document.getElementById('message').style.color = 'red';
+        });
+      } else {
+        document.getElementById('message').textContent = 'Please enter a valid name.';
+        document.getElementById('message').style.color = 'red';
+      }
+    });
+
+    // Logout button
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      auth.signOut().then(() => {
+        window.location.href = 'signin.html';
+      }).catch((error) => {
+        document.getElementById('message').textContent = 'Error logging out: ' + error.message;
+        document.getElementById('message').style.color = 'red';
+      });
+    });
+  </script>
+</body>
+</html>

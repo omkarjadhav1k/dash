@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Shop Manager</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js" defer></script>
+</head>
+<body>
+  <!-- Header with dynamic auth state -->
+  <header class="header">
+    <div class="container">
+      <h1>Smart Shop Manager</h1>
+      <nav>
+        <ul id="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+          <li id="auth-link"><a href="signin.html">Sign In</a></li>
+          <li><a class="btn btn-primary" href="signup.html"> Sign Up</a></li>
+        </ul>
+        <div id="user-profile" style="display: none;">
+          <span id="user-email"></span>
+          <button id="sign-out-btn" class="btn btn-primary">Sign Out</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-text">
+        <h2>Welcome to Smart Shop Manager</h2>
+        <p>Run Your Entire Shop Digitally</p>
+        <div class="buttons">
+          <a href="signin.html" class="btn">Sign In</a>
+          <a href="signup.html" class="btn btn-primary">Sign Up</a>
+          <div id="login-prompt" style="display: none;">
+  <p>Account created! Please log in below.</p>
+</div>
+        </div>
+      </div>
+      <div class="hero-img">
+        <img src="3515462-removebg-preview.png" alt="Dashboard illustration" />
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="container">
+      <h2>Powerful Features</h2>
+      <p>Everything you need to manage your shop efficiently in one place.</p>
+      <div class="feature-cards">
+        <div class="card">Easy Billing</div>
+        <div class="card">Inventory Control</div>
+        <div class="card">Customer Management</div>
+        <div class="card">Analytics Dashboard</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="testimonials" id="about">
+    <div class="container">
+      <h2>Why Shop Owners Love Us</h2>
+      <div class="testimonial-cards">
+        <div class="card">
+          <p>"Smart Shop Manager made my business run smoother and more organized!"</p>
+          <span>Jane Doe</span>
+        </div>
+        <div class="card">
+          <p>"The analytics dashboard gives me insights I never had before."</p>
+          <span>Mike Smith</span>
+        </div>
+        <div class="card">
+          <p>"Customer management has never been easier. This app is a game-changer!"</p>
+          <span>Alex Reed</span>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- Contact Section -->
+  <section class="contact" id="contact">
+    <div class="container">
+      <h2>Get In Touch</h2>
+      <p>Have questions? Our team is here to help you.</p>
+      <div class="contact-cards">
+        <div class="card">
+          <h3>Email Us</h3>
+          <p>support@smartshopmanager.com</p>
+        </div>
+        <div class="card">
+          <h3>Call Us</h3>
+          <p>+1 (234) 567-890</p>
+        </div>
+        <div class="card">
+          <h3>Live Chat</h3>
+          <p><a href="#">Start Chat</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-columns">
+        <div>
+          <h4>Smart Shop Manager</h4>
+          <p>The complete solution for managing your shop digitally.</p>
+        </div>
+        <div>
+          <h4>Product</h4>
+          <ul>
+            <li>Features</li>
+            <li>Pricing</li>
+            <li>Integration</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Support</h4>
+          <ul>
+            <li>Help Center</li>
+            <li>Tutorials</li>
+            <li>Community</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <ul>
+            <li>About</li>
+            <li>Contact</li>
+            <li>Blog</li>
+          </ul>
+        </div>
+      </div>
+      <p>&copy; 2025 Smart Shop Manager. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

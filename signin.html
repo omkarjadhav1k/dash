@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In - Smart Shop Manager</title>
+  <link rel="stylesheet" href="css/signin.css" />
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+  <!-- Sign In Content -->
+  <section class="auth-page">
+    <div class="container">
+      <div class="auth-container">
+        <div class="auth-header">
+          <h2>Welcome Back!</h2>
+          <div class="welcome-text">
+            <p>We're <strong>thrilled</strong> to see you again. Sign in to access your personalized dashboard and continue managing your shop efficiently.</p>
+            <img src="images/3d-render-secure-login-password-illustration.jpg" alt="Sign in illustration" height="500px">
+          </div>
+        </div>
+
+        <form class="auth-form" id="signin-form">
+          <div class="form-group">
+            <label for="login-email">Email Address</label>
+            <input type="email" id="login-email" placeholder="Enter your email" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="Enter your password" required>
+            <div class="forgot-password">
+              <a href="#" id="forgot-password">Forgot password?</a>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+          <div class="auth-footer">
+            <p>New to Smart Shop Manager? <a href="signup.html">Create an account</a></p>
+          </div>
+        </form>
+
+        <!-- <div class="auth-image">
+          <img src="images/3d-render-secure-login-password-illustration.jpg" alt="Sign in illustration">
+        </div>
+      </div>
+    </div> -->
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-columns">
+        <div><h4>Smart Shop Manager</h4><p>The complete solution for managing your shop digitally.</p></div>
+        <div><h4>Product</h4><ul><li>Features</li><li>Pricing</li><li>Integration</li></ul></div>
+        <div><h4>Support</h4><ul><li>Help Center</li><li>Tutorials</li><li>Community</li></ul></div>
+        <div><h4>Company</h4><ul><li>About</li><li>Contact</li><li>Blog</li></ul></div>
+      </div>
+      <p>&copy; 2025 Smart Shop Manager. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Firebase Config -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+
+  <!-- Auth Logic -->
+  <script>
+    const form = document.getElementById("signin-form");
+    const forgot = document.getElementById("forgot-password");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("login-email").value;
+      const password = document.getElementById("login-password").value;
+
+      try {
+        const userCred = await firebase.auth().signInWithEmailAndPassword(email, password);
+
+        if (!userCred.user.emailVerified) {
+          alert("Please verify your email before signing in.");
+          await firebase.auth().signOut();
+        } else {
+          alert("Login successful!");
+          window.location.href = "dashboard.html";
+        }
+      } catch (err) {
+        alert("Login failed: " + err.message);
+      }
+    });
+
+    forgot.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const email = prompt("Enter your registered email:");
+      if (email) {
+        try {
+          await firebase.auth().sendPasswordResetEmail(email);
+          alert("Password reset email sent.");
+        } catch (err) {
+          alert("Error: " + err.message);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

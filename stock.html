@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- SheetJS for Excel Export -->
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+  <div class="max-w-4xl mx-auto p-6">
+    <header class="flex items-center justify-between mb-6">
+      <h1 class="text-2xl font-bold">Stock Management</h1>
+      <span id="userNameDisplay" class="text-sm text-gray-600">Loading user...</span>
+    </header>
+
+    <!-- Low Stock Alert Section -->
+    <div class="card alert bg-red-100 border border-red-400 rounded p-4 mb-6">
+      <h3 class="text-xl font-semibold mb-2">🛑 Low Stock Alerts</h3>
+      <ul id="lowStockList" class="list-disc list-inside text-red-700">
+        <li>Loading...</li>
+      </ul>
+    </div>
+
+    <!-- Input Form -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+      <input id="productId" type="text" placeholder="Product ID" class="p-2 border rounded" />
+      <input id="productName" type="text" placeholder="Product Name" class="p-2 border rounded" />
+      <input id="productPrice" type="number" placeholder="Price" class="p-2 border rounded" />
+      <input id="productQty" type="number" placeholder="Quantity" class="p-2 border rounded" />
+      <button id="addUpdateBtn" onclick="addOrUpdateProduct()" class="col-span-2 md:col-span-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">Add / Update Product</button>
+    </div>
+
+    <!-- Download Button -->
+    <div class="mb-4 text-right">
+      <button onclick="downloadExcel()" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded">Download Stock Excel</button>
+    </div>
+
+    <!-- Stock Table -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full table-auto bg-white shadow-md rounded">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="px-4 py-2">Product ID</th>
+            <th class="px-4 py-2">Name</th>
+            <th class="px-4 py-2">Price</th>
+            <th class="px-4 py-2">Qty</th>
+            <th class="px-4 py-2">Total</th>
+            <th class="px-4 py-2">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="stockTableBody" class="text-center"></tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 text-right text-lg font-bold">
+      Total Stock Value: ₹<span id="totalValue">0</span>
+    </div>
+  </div>
+
+  <script>
+    // Firebase config (replace with your own)
+    const firebaseConfig = {
+  apiKey: "AIzaSyAEZzbOune3lfB2YFkYMSlg2CZJbAlGQdw",
+  authDomain: "smartshopmanager59.firebaseapp.com",
+  projectId: "smartshopmanager59",
+  storageBucket: "smartshopmanager59.appspot.com",
+  messagingSenderId: "697076760349",
+  appId: "1:697076760349:web:484fd62ea3806a3f92ebf4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      const userNameDisplay = document.getElementById('userNameDisplay');
+      if (user) {
+        userNameDisplay.textContent = `User: ${user.displayName || user.email}`;
+      } else {
+        userNameDisplay.textContent = 'Not logged in';
+        alert('Please log in first.');
+        // window.location.href = 'login.html'; // uncomment if you have login page
+      }
+    });
+
+    let stockData = JSON.parse(localStorage.getItem('stockData')) || [];
+    let editIndex = -1;  // -1 means no product is being edited
+
+    const LOW_STOCK_THRESHOLD = 5;
+
+    function saveStock() {
+      localStorage.setItem('stockData', JSON.stringify(stockData));
+    }
+
+    function updateLowStockAlerts() {
+      const alertList = document.getElementById('lowStockList');
+      alertList.innerHTML = '';
+
+      const now = new Date();
+      const dateTimeString = now.toLocaleString('en-IN', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
+      });
+
+      const lowStockItems = stockData.filter(item => item.qty <= LOW_STOCK_THRESHOLD);
+
+      if (lowStockItems.length === 0) {
+        alertList.innerHTML = '<li>No low stock alerts</li>';
+        return;
+      }
+
+      lowStockItems.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${item.name}</strong> - Qty: ${item.qty} (Alert at ${dateTimeString})`;
+        alertList.appendChild(li);
+      });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('stockTableBody');
+      tbody.innerHTML = '';
+      let total = 0;
+
+      stockData.forEach((item, index) => {
+        const itemTotal = item.price * item.qty;
+        total += itemTotal;
+
+        tbody.innerHTML += `
+          <tr class="border-b">
+            <td class="px-4 py-2">${item.id}</td>
+            <td class="px-4 py-2">${item.name}</td>
+            <td class="px-4 py-2">₹${item.price}</td>
+            <td class="px-4 py-2">${item.qty}</td>
+            <td class="px-4 py-2">₹${itemTotal.toFixed(2)}</td>
+            <td class="px-4 py-2 space-x-2">
+              <button onclick="startEdit(${index})" class="text-blue-600 hover:text-blue-800 font-semibold">Edit</button>
+              <button onclick="deleteProduct(${index})" class="text-red-600 hover:text-red-800 font-semibold">Delete</button>
+            </td>
+          </tr>`;
+      });
+
+      document.getElementById('totalValue').innerText = total.toFixed(2);
+      updateLowStockAlerts();
+    }
+
+    function addOrUpdateProduct() {
+      const id = document.getElementById('productId').value.trim();
+      const name = document.getElementById('productName').value.trim();
+      const price = parseFloat(document.getElementById('productPrice').value);
+      const qty = parseInt(document.getElementById('productQty').value);
+
+      if (!id || !name || isNaN(price) || isNaN(qty)) {
+        alert('Please enter valid data.');
+        return;
+      }
+
+      if (editIndex === -1) {
+        // Add new product or update existing by ID
+        const index = stockData.findIndex(p => p.id === id);
+        if (index > -1) {
+          stockData[index].qty += qty;
+          stockData[index].price = price;
+          stockData[index].name = name;
+        } else {
+          stockData.push({ id, name, price, qty });
+        }
+      } else {
+        // Update existing product (edit mode)
+        stockData[editIndex] = { id, name, price, qty };
+        editIndex = -1;
+        document.getElementById('addUpdateBtn').textContent = "Add / Update Product";
+      }
+
+      saveStock();
+      renderTable();
+      clearForm();
+    }
+
+    function startEdit(index) {
+      const product = stockData[index];
+      document.getElementById('productId').value = product.id;
+      document.getElementById('productName').value = product.name;
+      document.getElementById('productPrice').value = product.price;
+      document.getElementById('productQty').value = product.qty;
+      editIndex = index;
+      document.getElementById('addUpdateBtn').textContent = "Save Changes";
+    }
+
+    function clearForm() {
+      document.getElementById('productId').value = '';
+      document.getElementById('productName').value = '';
+      document.getElementById('productPrice').value = '';
+      document.getElementById('productQty').value = '';
+    }
+
+    function deleteProduct(index) {
+      if (confirm('Are you sure you want to delete this item?')) {
+        stockData.splice(index, 1);
+        saveStock();
+        renderTable();
+        if (editIndex === index) {
+          clearForm();
+          editIndex = -1;
+          document.getElementById('addUpdateBtn').textContent = "Add / Update Product";
+        }
+      }
+    }
+
+    // Download stock data as Excel file
+    function downloadExcel() {
+      if (stockData.length === 0) {
+        alert('No data to download.');
+        return;
+      }
+
+      // Map data for Excel
+      const dataToExport = stockData.map(item => ({
+        "Product ID": item.id,
+        "Product Name": item.name,
+        "Price": item.price,
+        "Quantity": item.qty,
+        "Total": (item.price * item.qty).toFixed(2)
+      }));
+
+      // Create worksheet and workbook
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Stock Data");
+
+      // Generate excel file and trigger download
+      XLSX.writeFile(workbook, `stock_data_${new Date().toISOString().slice(0,10)}.xlsx`);
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>

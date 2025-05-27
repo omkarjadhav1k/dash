@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="css/dasboard.css" />
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+
+  <!-- Chart.js for charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h2>Dashboard</h2>
+    <ul>
+      <li><a href="analytics.html">Analytics</a></li>
+      <li><a href="costomer.html">Customers</a></li>
+      <li><a href="Order.html">Orders</a></li>
+      <li><a href="Product.html">Products</a></li>
+      <li><a href="setting.html">Settings</a></li>
+      <li><a href="stock.html">Stock</a></li>
+      <li><a href="bill.html">Make Bill</a></li>
+    </ul>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Header -->
+    <header class="header">
+      <div class="container">
+        <div class="header-content">
+          <div class="logo">
+            <img src="images/logo.png" alt="Smart Shop Manager Logo" />
+            <h1>Smart Shop Manager</h1>
+          </div>
+
+          <div class="user-menu">
+            <button class="notification-badge" aria-label="Notifications">
+              <img src="images/notification.png" alt="Notifications" />
+              <span class="badge">3</span>
+            </button>
+
+            <div class="profile-dropdown">
+              <button class="profile-trigger" aria-label="User Profile">
+                <div class="avatar" id="user-avatar">U</div>
+                <span id="user-name">Admin User</span>
+              </button>
+
+              <div class="dropdown-menu">
+                <div class="user-info">
+                  <div class="avatar large" id="dropdown-avatar">U</div>
+                  <div>
+                    <h4 id="dropdown-name">Admin User</h4>
+                    <p id="dropdown-email">admin@example.com</p>
+                  </div>
+                </div>
+                <a href="profile.html" class="menu-item">My Profile</a>
+                <a href="setting.html" class="menu-item">Account Settings</a>
+                <button id="logout-btn" class="logout-button">Logout</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Cards Section -->
+    <section class="cards">
+      <div class="card revenue">
+        <h3>Total Stock</h3>
+        <p id="totalStock">Loading...</p>
+        <small>↑ 12% increase</small>
+      </div>
+
+      <div class="card customers">
+        <h3>This Month's Income</h3>
+        <p id="thisMonthIncome">Loading...</p>
+        <small>↑ 8.3% increase</small>
+      </div>
+
+      <div class="card orders">
+        <h3>Total Customers This Month</h3>
+        <p id="customerCount">Loading...</p>
+        <small>↓ 3.2% decrease</small>
+      </div>
+
+      <div class="card conversion">
+        <h3>Conversion Rate</h3>
+        <p>3.24%</p>
+        <small>↑ 1.2% increase</small>
+      </div>
+
+      <div class="card alert">
+        <h3>🛑 Low Stock Alerts</h3>
+        <ul id="loadLowStockProducts"><li>Loading...</li></ul>
+      </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="charts">
+      <div class="chart" id="revenueChart">
+        <h4>Revenue Overview</h4>
+        <canvas id="revenue"></canvas>
+      </div>
+
+      <div class="chart" id="customerChart">
+        <h4>Customer Growth</h4>
+        <canvas id="customers"></canvas>
+      </div>
+    </section>
+  </div>
+
+  <!-- Firebase & Data Scripts -->
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEZzbOune3lfB2YFkYMSlg2CZJbAlGQdw",
+      authDomain: "smartshopmanager59.firebaseapp.com",
+      projectId: "smartshopmanager59",
+      storageBucket: "smartshopmanager59.appspot.com",
+      messagingSenderId: "697076760349",
+      appId: "1:697076760349:web:484fd62ea3806a3f92ebf4"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Auth State
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        const name = user.displayName || 'User';
+        document.getElementById('user-name').textContent = name;
+        document.getElementById('dropdown-name').textContent = name;
+        document.getElementById('dropdown-email').textContent = user.email;
+        const initial = name.charAt(0).toUpperCase();
+        document.getElementById('user-avatar').textContent = initial;
+        document.getElementById('dropdown-avatar').textContent = initial;
+      } else {
+        window.location.href = "signin.html";
+      }
+    });
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      auth.signOut().then(() => window.location.href = 'index.html');
+    });
+
+    // Total Stock
+    db.collection('products').get().then(snapshot => {
+      let total = 0;
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        total += (d.price || 0) * (d.quantity || 0);
+      });
+      document.getElementById('totalStock').textContent = `₹${total.toFixed(2)}`;
+    });
+
+    // This Month Income
+    db.collection('orders').get().then(snapshot => {
+      let totalIncome = 0;
+      const thisMonth = new Date().getMonth();
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const date = data.date?.toDate?.() || new Date();
+        if (date.getMonth() === thisMonth) {
+          totalIncome += data.amount || 0;
+        }
+      });
+      document.getElementById('thisMonthIncome').textContent = `₹${totalIncome.toFixed(2)}`;
+    });
+
+    // Customers Count
+    db.collection('customers').get().then(snapshot => {
+      document.getElementById('customerCount').textContent = snapshot.size;
+    });
+
+    // Low Stock List
+    db.collection('products').where('quantity', '<', 5).get().then(snapshot => {
+      const list = document.getElementById('lowStockList');
+      list.innerHTML = '';
+      if (snapshot.empty) {
+        list.innerHTML = '<li>No low stock items</li>';
+      } else {
+        snapshot.forEach(doc => {
+          const p = doc.data();
+          list.innerHTML += `<li>${p.name} (Qty: ${p.quantity})</li>`;
+        });
+      }
+    });
+
+    // Charts
+    new Chart(document.getElementById('revenue'), {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar'],
+        datasets: [{
+          label: 'Revenue',
+          data: [1000, 2000, 3000],
+          backgroundColor: 'rgba(13, 110, 253, 0.3)',
+          borderColor: '#0d6efd',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: true } } }
+    });
+
+    new Chart(document.getElementById('customers'), {
+      type: 'bar',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar'],
+        datasets: [{
+          label: 'Customers',
+          data: [50, 80, 120],
+          backgroundColor: '#2ecc71'
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: true } } }
+    });
+    function loadLowStockProducts() {
+    const list = document.getElementById('lowStockList');
+    db.collection("stock").where("quantity", "<=", 5).get().then(snapshot => {
+      list.innerHTML = '';
+      if (snapshot.empty) {
+        list.innerHTML = '<li>No low stock products 🎉</li>';
+        return;
+      }
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        const item = document.createElement('li');
+        item.textContent = `${p.name} (Qty: ${p.quantity})`;
+        list.appendChild(item);
+      });
+    });
+  }
+
+  loadLowStockProducts();
+  </script>
+</body>
+</html>

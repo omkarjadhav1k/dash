@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Create Account - Smart Shop Manager</title>
+  <link rel="stylesheet" href="css/signup.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <section class="auth-page">
+    <div class="container">
+      <div class="auth-container">
+        <div class="auth-header">
+          <h2>Get Started Today</h2>
+          <div class="welcome-text">
+            <p>Join <strong>thousands of shop owners</strong> who are transforming their business with our powerful management tools. Create your account in just 1 minute.</p>
+          </div>
+        </div>
+
+        <form class="auth-form" id="signupForm">
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" placeholder="Enter your full name" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Business Email</label>
+            <input type="email" id="email" placeholder="your@business.com" required />
+          </div>
+          <div class="form-group">
+            <label for="password">Create Password</label>
+            <input type="password" id="password" placeholder="At least 8 characters" required />
+            <small>Use a mix of letters, numbers, and symbols</small>
+          </div>
+          <div class="form-group">
+            <label for="confirm-password">Confirm Password</label>
+            <input type="password" id="confirm-password" placeholder="Re-enter your password" required />
+          </div>
+          <div class="terms">
+            <input type="checkbox" id="terms" required />
+            <label for="terms">I agree to Smart Shop Manager's <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>, and confirm I'm at least 16 years old.</label>
+          </div>
+
+          <!-- Message display -->
+          <div id="message" style="margin: 10px 0; font-weight: bold;"></div>
+
+          <button type="submit" class="btn btn-primary btn-block">Create My Free Account</button>
+
+          <div class="auth-footer">
+            <p>Already have an account? <a href="signin.html">Sign in here</a></p>
+          </div>
+        </form>
+
+        <div class="auth-image">
+          <img src="6333213-removebg-preview.png" alt="Sign up illustration" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-columns">
+        <div>
+          <h4>Smart Shop Manager</h4>
+          <p>The complete solution for managing your shop digitally.</p>
+        </div>
+        <div>
+          <h4>Product</h4>
+          <ul>
+            <li>Features</li>
+            <li>Pricing</li>
+            <li>Integration</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Support</h4>
+          <ul>
+            <li>Help Center</li>
+            <li>Tutorials</li>
+            <li>Community</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Company</h4>
+          <ul>
+            <li>About</li>
+            <li>Contact</li>
+            <li>Blog</li>
+          </ul>
+        </div>
+      </div>
+      <p>&copy; 2025 Smart Shop Manager. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAEZzbOune3lfB2YFkYMSlg2CZJbAlGQdw",
+      authDomain: "smartshopmanager59.firebaseapp.com",
+      projectId: "smartshopmanager59",
+      storageBucket: "smartshopmanager59.appspot.com",
+      messagingSenderId: "697076760349",
+      appId: "1:697076760349:web:484fd62ea3806a3f92ebf4"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Show message helper
+    function showMessage(msg, isError = false) {
+      const messageEl = document.getElementById('message');
+      messageEl.style.color = isError ? 'red' : 'green';
+      messageEl.textContent = msg;
+    }
+
+    // Form submission handling
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirm-password').value;
+      const termsChecked = document.getElementById('terms').checked;
+
+      if (password !== confirmPassword) {
+        showMessage('Passwords do not match.', true);
+        return;
+      }
+
+      if (!termsChecked) {
+        showMessage('You must agree to the terms and conditions.', true);
+        return;
+      }
+
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        await userCredential.user.updateProfile({ displayName: name });
+        await userCredential.user.sendEmailVerification();
+
+        showMessage('Account created successfully! Please verify your email. Redirecting to login...');
+        setTimeout(() => {
+          window.location.href = 'signin.html';
+        }, 2500);
+      } catch (error) {
+        let errorMessage = 'Signup failed. Please try again.';
+        if (error.code === 'auth/email-already-in-use') errorMessage = 'Email is already in use.';
+        else if (error.code === 'auth/invalid-email') errorMessage = 'Invalid email address.';
+        else if (error.code === 'auth/weak-password') errorMessage = 'Password should be at least 6 characters.';
+        showMessage(errorMessage, true);
+      }
+    });
+  </script>
+</body>
+</html>
